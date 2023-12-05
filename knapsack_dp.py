@@ -13,8 +13,6 @@ def knapsackdp(W, val, wt):
     # value with knapsack capacity i. 
     dp = [0 for i in range(W + 1)] 
   
-    ans = 0
-  
     # Fill dp[] using above recursive formula 
     for i in range(W + 1): 
         for j in range(n): 
@@ -25,9 +23,13 @@ def knapsackdp(W, val, wt):
   
 # Contoh penggunaan
 if __name__ == '__main__':
-    W = 90
-    val = [52, 14, 15, 20, 60] 
-    wt = [37, 20, 10, 23, 39] 
+    # W = 90
+    # val = [52, 14, 15, 20, 60] 
+    # wt = [37, 20, 10, 23, 39] 
+
+    W = 8
+    val = [94, 17, 60, 60, 53] 
+    wt = [6, 6, 4, 9, 11]
     print("Result: ", knapsackdp(W, val, wt)) 
   
 # This code is contributed by Anant Agarwal. 
