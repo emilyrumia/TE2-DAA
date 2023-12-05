@@ -1,26 +1,64 @@
 import math
 
+def cal_upper_bound(barang, W_1, V_N, i):
+    if i + 2 >= len(barang):
+        return V_N
+    z_1 = V_N + math.floor(W_1 / barang[i + 1][1]) * barang[i + 1][0]
+    W_2 = W_1 - math.floor(W_1 / barang[i + 1][1]) * barang[i + 1][1]
+    U_1 = z_1 + math.floor(W_2 * barang[i + 2][0] / barang[i + 2][1])
+    U_2 = z_1 + math.floor(
+            ((W_2 + math.ceil((1 / barang[i][1]) 
+            * (barang[i + 1][1] - W_2)) 
+            * barang[i][1])
+            * barang[i + 1][0] / barang[i + 1][1])  
+            - math.ceil((1 / barang[i][1]) 
+            * (barang[i + 1][1] - W_2)) 
+            * barang[i][0]
+        )
+    return max(U_1, U_2)
+
+def find_max_j(x, i):
+    # Find max j such that j<=i and xj>0
+    max_j = []
+    for j in range(i + 1):
+        if x[j] > 0 and j<=i:
+            max_j.append(j)
+    if len(max_j) == 0:
+        return -1
+    return max(max_j)
+    
+def find_min_j(barang, W_1, i):
+    # Find min j such that j>i and wj<=W'
+    min_j = []
+    for j in range(i + 1, len(barang)):
+        if barang[j][1] <= W_1 and j>i:
+            min_j.append(j)
+    if len(min_j) == 0:
+        return -1
+    return min(min_j)
+
 def knapsackbnb(W, val, wt):
 
     # Step 1: Initialize
     barang = list(zip(val, wt))
 
-    #Eliminate dominated items according to Procedure 1.
-    N =  [i for i in range(len(barang))]
+    # Eliminate dominated items according to Procedure 1.
     j = 0
+    N =  [i for i in range(len(barang))]
     while j < len(N) - 1:
         k = j + 1
         while k < len(N):
-            wj, vj = barang[N[j]][1], barang[N[j]][0]
-            wk, vk = barang[N[k]][1], barang[N[k]][0]
-            if math.floor(wk / wj) * vj >= vk:
+            ratio_1 = math.floor(barang[N[k]][1] / barang[N[j]][1]) * barang[N[j]][0]
+            ratio_2 = math.floor(barang[N[j]][1] / barang[N[k]][1]) * barang[N[k]][0]
+            if ratio_1 >= barang[N[k]][0]:
                 N.pop(k)
-            elif math.floor(wj / wk) * vk >= vj:
+            elif ratio_2 >= barang[N[j]][0]:
                 N.pop(j)
                 k = len(N)
             else:
                 k += 1
         j += 1
+    
     barang = [barang[i] for i in N]
 
     # Sort the non-dominated items according to decreasing vi/wi ratios.
@@ -45,19 +83,21 @@ def knapsackbnb(W, val, wt):
 
     # Step 5: Finish (next = 5)
     while next != 5:
-
         # Step 2: Develop
         if next == 2:
-            M, barang, x, i, V_N, W_1, next, z_topi, x_topi = develop(M, barang, x, i, V_N, W_1, U, m, z_topi, x_topi)
-
+            M, barang, x, i, V_N, W_1, next, z_topi, x_topi = develop(
+                M, barang, x, i, V_N, W_1, U, m, z_topi, x_topi
+            )
         # Step 3: Backtrack
         if next == 3:
-            M, barang, x, i, V_N, W_1, next, z_topi, x_topi = backtrack(M, barang, x, i, V_N, W_1, m, z_topi, x_topi)
-
+            M, barang, x, i, V_N, W_1, next, z_topi, x_topi = backtrack(
+                M, barang, x, i, V_N, W_1, m, z_topi, x_topi
+            )
         # Step 4: Replace
         if next == 4:
-            M, barang, x, i, V_N, W_1, next, z_topi, x_topi = replace(M, barang, x, i, V_N, W_1, m, z_topi, x_topi)
-
+            M, barang, x, i, V_N, W_1, next, z_topi, x_topi = replace(
+                M, barang, x, i, V_N, W_1, m, z_topi, x_topi
+            )
     return z_topi, x_topi
 
 def develop(M, barang, x, i, V_N, W_1, U, m, z_topi, x_topi):
@@ -94,13 +134,13 @@ def backtrack(M, barang, x, i, V_N, W_1, m, z_topi, x_topi):
     if W_1 < m[i]:
         # Go to Step 3
         return M, barang, x, i, V_N, W_1, 3, z_topi, x_topi
-    if V_N + math.floor(W_1 * (barang[i + 1][0] / barang[i + 1][1])) <= z_topi:
+    if V_N + math.floor(W_1 * (barang[i+1][0] / barang[i+1][1])) <= z_topi:
         V_N -= barang[i][0] * x[i]
         W_1 += barang[i][1] * x[i]
         x[i] = 0
         # Go to Step 3
         return M, barang, x, i, V_N, W_1, 3, z_topi, x_topi
-    if W_1 - barang[i + 1][1] >= m[i]:
+    if W_1 - barang[i][1] >= m[i]:
         # Go to Step 2
         return M, barang, x, i, V_N, W_1, 2, z_topi, x_topi
 
@@ -137,49 +177,11 @@ def replace(M, barang, x, i, V_N, W_1, m, z_topi, x_topi):
     # Go to Step 2
     return M, barang, x, i, V_N, W_1, 2, z_topi, x_topi
 
-def cal_upper_bound(barang, W_1, V_N, i):
-    if i + 2 >= len(barang):
-        return V_N
-    v1, v2, v3 = barang[i][0], barang[i + 1][0], barang[i + 2][0]
-    w1, w2, w3 = barang[i][1], barang[i + 1][1], barang[i + 2][1]
-    z_1 = V_N + math.floor(W_1 / w2) * v2
-    W_2 = W_1 - math.floor(W_1 / w2) * w2
-    U_1 = z_1 + math.floor(W_2 * v3 / w3)
-    U_2 = z_1 + math.floor(
-            ((W_2 + math.ceil((1 / w1) * (w2 - W_2)) * w1)* v2 / w2) 
-            - math.ceil((1 / w1) * (w2 - W_2)) * v1
-        )
-    U = max(U_1, U_2)
-    return U
-
-def find_max_j(x, i):
-    # Find max j such that j<=i and xj>0
-    max_j = []
-    for j in range(i + 1):
-        if x[j] > 0 and j<=i:
-            max_j.append(j)
-    if len(max_j) == 0:
-        return -1
-    return max(max_j)
-    
-def find_min_j(barang, W_1, i):
-    # Find min j such that j>i and wj<=W'
-    min_j = []
-    for j in range(i + 1, len(barang)):
-        if barang[j][1] <= W_1 and j>i:
-            min_j.append(j)
-    if len(min_j) == 0:
-        return -1
-    return min(min_j)
-
 # Contoh penggunaan
 if __name__ == '__main__':
     W = 90
     val = [52, 14, 15, 20, 60] 
     wt = [37, 20, 10, 23, 39]
-
-    barang = list(zip(val, wt))
-    print("barang:", barang)
 
     z_topi, x_topi = knapsackbnb(W, val, wt)
 
