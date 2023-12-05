@@ -172,7 +172,7 @@ def find_min_j(barang, W_1, i):
             min_j.append(j)
     if len(min_j) == 0:
         return -1
-    return (max(min_j))
+    return (min(min_j))
 
 # Contoh penggunaan
 if __name__ == '__main__':
